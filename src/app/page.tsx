@@ -3,11 +3,16 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
+import { SignInButton } from "@clerk/nextjs";
+
+import { UserButton } from "@clerk/nextjs";
 
 export default function Home() {
   const [topic, setTopic] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
+  const [error, setError] = useState("");
+  const [credits, setCredits] = useState(5);
 
   const generateScript = async () => {
     try {
@@ -22,8 +27,16 @@ export default function Home() {
       });
 
       const data = await response.json();
+      console.log(data);
+      if (data.error) {
+  setError(data.error);
+  return;
+}
+
+setError("");
 
       setResult(data.result);
+      setCredits(data.credits);
     } catch (error) {
       console.log(error);
     } finally {
@@ -46,14 +59,23 @@ export default function Home() {
           </h1>
 
           <div className="flex items-center gap-4">
-            <Button variant="ghost">
-              Pricing
-            </Button>
 
-            <Button className="rounded-xl">
-              Login
-            </Button>
-          </div>
+  <Button variant="ghost">
+    Pricing
+  </Button>
+  <div className="px-4 py-2 rounded-xl bg-white/10 text-sm">
+  Credits: {credits}
+</div>
+
+  <SignInButton>
+  <Button className="rounded-xl">
+    Login
+  </Button>
+</SignInButton>
+
+<UserButton />
+
+</div>
         </div>
       </nav>
 
@@ -136,6 +158,11 @@ export default function Home() {
               {loading ? "Generating..." : "Generate Script"}
             </Button>
 
+            {error && (
+  <div className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-red-400">
+    {error}
+  </div>
+)}
             {result && (
   <div className="mt-10 rounded-3xl border border-white/10 bg-black/40 p-8">
     
