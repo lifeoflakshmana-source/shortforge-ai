@@ -4,8 +4,18 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+let requestCount = 0;
+
 export async function POST(req: Request) {
   try {
+    if (requestCount > 50) {
+      return Response.json({
+        error: "Daily limit reached",
+      });
+    }
+
+    requestCount++;
+
     const body = await req.json();
 
     const { topic } = body;
@@ -14,30 +24,30 @@ export async function POST(req: Request) {
       model: "gpt-4.1-mini",
       messages: [
         {
-            role: "system",
-            content: `
-        You are an elite viral content strategist.
+          role: "system",
+          content: `
+You are an elite viral content strategist.
 
-        Generate content in this exact format:
+Generate content in this exact format:
 
-        # Hook
+# Hook
 
-        # Script
+# Script
 
-        # Scene Ideas
+# Scene Ideas
 
-        # B-Roll Ideas
+# B-Roll Ideas
 
-        # CTA
+# CTA
 
-        Make the content cinematic, emotional, highly engaging and optimized for retention.
-            `,
+Make the content cinematic, emotional and highly engaging.
+          `,
         },
         {
-            role: "user",
-            content: topic,
+          role: "user",
+          content: topic,
         },
-        ],
+      ],
     });
 
     return Response.json({
