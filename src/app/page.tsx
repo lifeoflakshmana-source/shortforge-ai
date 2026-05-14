@@ -4,18 +4,21 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
 import { SignInButton } from "@clerk/nextjs";
-
 import { UserButton } from "@clerk/nextjs";
 
 export default function Home() {
+
   const [topic, setTopic] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
   const [error, setError] = useState("");
   const [credits, setCredits] = useState(5);
 
+  // Generate Script
   const generateScript = async () => {
+
     try {
+
       setLoading(true);
 
       const response = await fetch("/api/generate", {
@@ -27,20 +30,67 @@ export default function Home() {
       });
 
       const data = await response.json();
-      console.log(data);
-      if (data.error) {
-  setError(data.error);
-  return;
-}
 
-setError("");
+      console.log(data);
+
+      if (data.error) {
+        setError(data.error);
+        return;
+      }
+
+      setError("");
 
       setResult(data.result);
+
       setCredits(data.credits);
+
     } catch (error) {
+
       console.log(error);
+
     } finally {
+
       setLoading(false);
+
+    }
+  };
+
+  // Buy Credits
+  const buyCredits = async () => {
+
+    try {
+
+      const response = await fetch("/api/payment", {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: data.amount,
+        currency: data.currency,
+        name: "ShortForge AI",
+        description: "Buy 100 Credits",
+        order_id: data.id,
+
+        handler: async function () {
+          alert("Payment Successful!");
+        },
+
+        theme: {
+          color: "#7c3aed",
+        },
+      };
+
+      const razorpay = new (window as any).Razorpay(options);
+
+      razorpay.open();
+
+    } catch (error) {
+
+      console.log(error);
+
     }
   };
 
@@ -48,10 +98,11 @@ setError("");
     <main className="min-h-screen bg-black text-white relative overflow-hidden">
 
       {/* Background Glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-purple-500/20 blur-[120px] rounded-full"></div>
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-700px h-700px bg-purple-500/20 blur-[120px] rounded-full"></div>
 
       {/* Navbar */}
       <nav className="w-full border-b border-white/10 backdrop-blur-xl relative z-10">
+
         <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
 
           <h1 className="text-2xl font-bold tracking-tight">
@@ -60,27 +111,36 @@ setError("");
 
           <div className="flex items-center gap-4">
 
-  <Button variant="ghost">
-    Pricing
-  </Button>
-  <div className="px-4 py-2 rounded-xl bg-white/10 text-sm">
-  Credits: {credits}
-</div>
+            <Button
+              onClick={buyCredits}
+              className="rounded-xl bg-purple-600 hover:bg-purple-700"
+            >
+              Buy Credits
+            </Button>
 
-  <SignInButton>
-  <Button className="rounded-xl">
-    Login
-  </Button>
-</SignInButton>
+            <Button variant="ghost">
+              Pricing
+            </Button>
 
-<UserButton />
+            <div className="px-4 py-2 rounded-xl bg-white/10 text-sm">
+              Credits: {credits}
+            </div>
 
-</div>
+            <SignInButton>
+              <Button className="rounded-xl">
+                Login
+              </Button>
+            </SignInButton>
+
+            <UserButton />
+
+          </div>
         </div>
       </nav>
 
       {/* Hero Section */}
       <section className="flex items-center justify-center px-6 py-24 relative z-10">
+
         <div className="max-w-6xl text-center">
 
           <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-zinc-300 mb-8">
@@ -98,6 +158,7 @@ setError("");
           </p>
 
           <div className="flex items-center justify-center gap-4">
+
             <Button className="rounded-2xl px-8 py-6 text-lg">
               Start Creating
             </Button>
@@ -108,12 +169,14 @@ setError("");
             >
               Watch Demo
             </Button>
+
           </div>
         </div>
       </section>
 
       {/* Input Section */}
       <section className="px-6 pb-32 relative z-10">
+
         <div className="max-w-6xl mx-auto">
 
           <div className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl">
@@ -134,6 +197,7 @@ setError("");
             </p>
 
             <div className="flex gap-4 mt-6 flex-wrap">
+
               <Button variant="secondary">
                 Motivational
               </Button>
@@ -149,6 +213,7 @@ setError("");
               <Button variant="secondary">
                 Luxury
               </Button>
+
             </div>
 
             <Button
@@ -159,35 +224,33 @@ setError("");
             </Button>
 
             {error && (
-  <div className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-red-400">
-    {error}
-  </div>
-)}
+              <div className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-red-400">
+                {error}
+              </div>
+            )}
+
             {result && (
-  <div className="mt-10 rounded-3xl border border-white/10 bg-black/40 p-8">
-    
-    <div className="flex items-center justify-between mb-6">
-      <h3 className="text-2xl font-bold">
-        Generated Script
-      </h3>
 
-      <Button
-  onClick={generateScript}
-  disabled={loading}
-  className="w-full mt-8 rounded-2xl py-6 text-lg hover:scale-[1.02] transition-all duration-300"
->
-  {loading ? "Generating Viral Script..." : "Generate Script"}
-</Button>
-    </div>
+              <div className="mt-10 rounded-3xl border border-white/10 bg-black/40 p-8">
 
-    <div className="prose prose-invert prose-headings:text-white prose-p:text-zinc-300 max-w-none">
-      <ReactMarkdown>
-        {result}
-      </ReactMarkdown>
-    </div>
+                <div className="flex items-center justify-between mb-6">
 
-  </div>
-)}
+                  <h3 className="text-2xl font-bold">
+                    Generated Script
+                  </h3>
+
+                </div>
+
+                <div className="prose prose-invert prose-headings:text-white prose-p:text-zinc-300 max-w-none">
+
+                  <ReactMarkdown>
+                    {result}
+                  </ReactMarkdown>
+
+                </div>
+
+              </div>
+            )}
 
           </div>
         </div>

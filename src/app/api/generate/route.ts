@@ -19,55 +19,52 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     const { topic } = body;
+
     if (!topic) {
-  return Response.json({
-    error: "Topic is required",
-  });
-}
+      return Response.json({
+        error: "Topic is required",
+      });
+    }
 
-    // Check existing user
-    
-    // Create user if not exists
-    
-
-    // Get latest user data
+    // Get existing user
     let { data: userData } = await supabase
-  .from("users")
-  .select("*")
-  .eq("user_id", userId)
-  .single();
+      .from("users")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
 
-if (!userData) {
-  await supabase.from("users").insert([
-    {
-      user_id: userId,
-      credits: 5,
-    },
-  ]);
+    // Create new user if not exists
+    if (!userData) {
+      await supabase.from("users").insert([
+        {
+          user_id: userId,
+          credits: 5,
+        },
+      ]);
 
-  const { data: newUser } = await supabase
-    .from("users")
-    .select("*")
-    .eq("user_id", userId)
-    .single();
+      const { data: newUser } = await supabase
+        .from("users")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
 
-  userData = newUser;
-}
+      userData = newUser;
+    }
 
     // Stop if no credits
     if (!userData) {
-  return Response.json({
-    error: "User not found",
-  });
-}
+      return Response.json({
+        error: "User not found",
+      });
+    }
 
-if (userData.credits <= 0) {
-  return Response.json({
-    error: "No credits remaining",
-  });
-}
+    if (userData.credits <= 0) {
+      return Response.json({
+        error: "No credits remaining",
+      });
+    }
 
-    // OpenAI generation
+    // Generate AI content
     const completion = await openai.chat.completions.create({
       model: "gpt-4.1-mini",
       messages: [
@@ -98,7 +95,7 @@ Make the content cinematic, emotional and highly engaging.
       ],
     });
 
-    // Deduct credits
+    // Deduct credit
     await supabase
       .from("users")
       .update({
@@ -110,12 +107,11 @@ Make the content cinematic, emotional and highly engaging.
       result: completion.choices[0].message.content,
       credits: userData.credits - 1,
     });
-
   } catch (error) {
-  console.log("FULL ERROR:", error);
+    console.log("FULL ERROR:", error);
 
-  return Response.json({
-    error: String(error),
-  });
-}
+    return Response.json({
+      error: String(error),
+    });
+  }
 }
