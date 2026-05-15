@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 declare global {
   interface Window {
-    Razorpay: any;
+    Razorpay: unknown;
   }
 }
 
@@ -14,7 +14,7 @@ export default function DashboardPage() {
   const [topic, setTopic] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
-  const [scripts, setScripts] = useState<any[]>([]);
+  const [scripts, setScripts] = useState<unknown[]>([]);
   const [credits, setCredits] = useState(5);
 
   useEffect(() => {
