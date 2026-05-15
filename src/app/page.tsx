@@ -427,7 +427,8 @@ useEffect(() => {
 
   <div className="grid md:grid-cols-2 gap-6">
 
-    {scripts.map((script: any) => (
+    {Array.isArray(scripts) &&
+  scripts.map((script: any) => (
 
       <div
         key={script.id}
