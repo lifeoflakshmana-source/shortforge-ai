@@ -13,7 +13,9 @@ import jsPDF from "jspdf";
 
 declare global {
   interface Window {
-    Razorpay: unknown;
+    Razorpay: new (options: unknown) => {
+  open: () => void;
+};
   }
 }
 
@@ -107,7 +109,9 @@ export default function Home() {
         },
       };
 
-      const razorpay = new window.Razorpay(options);
+      const razorpay = new window.Razorpay(
+  options as never
+);
       razorpay.open();
 
     } catch (error) {
