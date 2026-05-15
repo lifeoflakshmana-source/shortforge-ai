@@ -3,11 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
-declare global {
-  interface Window {
-    Razorpay: unknown;
-  }
-}
+
 
 export default function DashboardPage() {
 
@@ -185,7 +181,9 @@ await fetch("/api/credits", {
         },
       };
 
-      const razorpay = new window.Razorpay(options);
+      const Razorpay = (window as any).Razorpay;
+
+        const razorpay = new Razorpay(options);
 
       razorpay.open();
 
