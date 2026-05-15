@@ -12,6 +12,9 @@ export default function DashboardPage() {
   const [result, setResult] = useState("");
   const [scripts, setScripts] = useState<unknown[]>([]);
   const [credits, setCredits] = useState(5);
+  const [thumbnailPrompt, setThumbnailPrompt] = useState("");
+  const [thumbnailLoading, setThumbnailLoading] = useState(false);
+  const [thumbnail, setThumbnail] = useState("");
 
   useEffect(() => {
 
@@ -134,6 +137,45 @@ fetchScripts();
     }
   };
 
+  const generateThumbnail = async () => {
+
+  if (!thumbnailPrompt) return;
+
+  setThumbnailLoading(true);
+
+  try {
+
+    const response = await fetch("/api/thumbnail", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt: thumbnailPrompt,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.image) {
+
+      setThumbnail(
+        `data:image/png;base64,${data.image}`
+      );
+
+    }
+
+  } catch (error) {
+
+    console.log(error);
+
+  } finally {
+
+    setThumbnailLoading(false);
+
+  }
+};
+
   const buyCredits = async () => {
 
     try {
@@ -141,6 +183,7 @@ fetchScripts();
       const response = await fetch("/api/payment", {
         method: "POST",
       });
+      
 
       const order = await response.json();
 
@@ -180,6 +223,8 @@ await fetch("/api/credits", {
           color: "#7c3aed",
         },
       };
+
+      
 
       const Razorpay = (window as any).Razorpay;
 
@@ -390,19 +435,73 @@ await fetch("/api/credits", {
 
           <div>
 
-            <h2 className="text-4xl md:text-5xl font-black mb-3">
-              AI Thumbnail Generator 🎨
-            </h2>
+            {/* AI Thumbnail Generator */}
+
+<div className="max-w-6xl mx-auto mt-20 border border-purple-500/20 rounded-[32px] bg-zinc-950/70 backdrop-blur-xl p-8">
+
+  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+
+    <div>
+
+      <h2 className="text-4xl md:text-5xl font-black mb-3">
+        AI Thumbnail Generator 🎨
+      </h2>
+
+      <p className="text-zinc-400 text-lg">
+        Generate cinematic viral thumbnails instantly.
+      </p>
+
+    </div>
+
+  </div>
+
+  <textarea
+    value={thumbnailPrompt}
+    onChange={(e) => setThumbnailPrompt(e.target.value)}
+    placeholder="Enter thumbnail idea..."
+    className="w-full h-36 bg-black/80 border border-white/10 rounded-3xl p-6 text-xl outline-none resize-none focus:border-purple-500 transition-all duration-300"
+  />
+
+  <Button
+    onClick={generateThumbnail}
+    disabled={thumbnailLoading}
+    className="mt-6 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:scale-105 transition-all duration-300 text-white px-8 py-6 rounded-2xl text-lg font-bold"
+  >
+    {thumbnailLoading
+      ? "Generating Thumbnail..."
+      : "🎨 Generate Thumbnail"}
+  </Button>
+
+  {thumbnail && (
+
+    <div className="mt-10">
+
+      <img
+        src={thumbnail}
+        alt="Generated Thumbnail"
+        className="rounded-3xl w-full max-w-2xl border border-white/10"
+      />
+
+      <a
+        href={thumbnail}
+        download="thumbnail.png"
+      >
+        <Button className="mt-6 bg-white text-black hover:bg-zinc-200 rounded-2xl">
+          Download Thumbnail
+        </Button>
+      </a>
+
+    </div>
+
+  )}
+
+</div>
 
             <p className="text-zinc-400 text-lg">
               Generate cinematic thumbnails instantly using AI.
             </p>
 
           </div>
-
-          <Button className="bg-gradient-to-r from-purple-600 to-fuchsia-600 rounded-2xl px-6 py-5 text-lg font-bold">
-            Coming Soon
-          </Button>
 
         </div>
 
