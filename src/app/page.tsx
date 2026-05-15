@@ -1,17 +1,22 @@
 "use client";
 
-declare global {
-  interface Window {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    Razorpay: any;
-  }
-}
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
+import {
+  SignInButton,
+  UserButton,
+  useUser,
+} from "@clerk/nextjs";
+
+declare global {
+  interface Window {
+    Razorpay: unknown;
+  }
+}
 
 export default function Home() {
+  const { isSignedIn } = useUser();
 
   const [topic, setTopic] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,275 +26,395 @@ export default function Home() {
 
   // Generate Script
   const generateScript = async () => {
-
     try {
-
       setLoading(true);
+      setError("");
+      setResult("");
 
       const response = await fetch("/api/generate", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ topic }),
+        body: JSON.stringify({
+          topic,
+        }),
       });
 
       const data = await response.json();
-
-      console.log(data);
 
       if (data.error) {
         setError(data.error);
         return;
       }
 
-      setError("");
-
       setResult(data.result);
-
       setCredits(data.credits);
 
     } catch (error) {
-
       console.log(error);
-
+      setError("Something went wrong");
     } finally {
-
       setLoading(false);
-
     }
   };
 
   // Buy Credits
-  const buyCredits = async (
-  amount: number,
-  creditsToAdd: number
-) => {
+  const buyCredits = async (amount: number) => {
+    try {
+      if (!isSignedIn) {
+        alert("Please login first");
+        return;
+      }
 
-  try {
+      const response = await fetch("/api/payment", {
+        method: "POST",
+        body: JSON.stringify({
+          amount,
+        }),
+      });
 
-    const response = await fetch("/api/payment", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        amount,
-        credits: creditsToAdd,
-      }),
-    });
+      const data = await response.json();
 
-    const data = await response.json();
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: data.amount,
+        currency: data.currency,
+        name: "ShortForge AI",
+        description: "Buy Credits",
+        order_id: data.id,
 
-    const options = {
-      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        handler: async function () {
 
-      amount: data.amount,
+          const verifyResponse = await fetch("/api/payment/verify", {
+            method: "POST",
+            body: JSON.stringify({
+              amount,
+            }),
+          });
 
-      currency: data.currency,
+          const verifyData = await verifyResponse.json();
 
-      name: "ShortForge AI",
+          if (verifyData.credits) {
+            setCredits(verifyData.credits);
+          }
 
-      description: "Buy Credits",
+          alert("Payment Successful");
+        },
 
-      order_id: data.id,
+        theme: {
+          color: "#7c3aed",
+        },
+      };
 
-      handler: async function () {
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
 
-        await fetch("/api/payment/verify", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            credits: creditsToAdd,
-          }),
-        });
-
-        setCredits((prev) => prev + creditsToAdd);
-
-        alert("Payment Successful!");
-      },
-
-      theme: {
-        color: "#7c3aed",
-      },
-    };
-
-    const razorpay = new window.Razorpay(options);
-
-    razorpay.open();
-
-  } catch (error) {
-
-    console.log(error);
-
-  }
-};
+    } catch (error) {
+      console.log(error);
+      alert("Payment failed");
+    }
+  };
 
   return (
-    <main className="min-h-screen bg-black text-white relative overflow-hidden">
-
-      {/* Background Glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-700px h-700px bg-purple-500/20 blur-[120px] rounded-full"></div>
+    <main className="min-h-screen bg-black text-white">
 
       {/* Navbar */}
-      <nav className="w-full border-b border-white/10 backdrop-blur-xl relative z-10">
-
+      <nav className="border-b border-white/10 sticky top-0 bg-black/70 backdrop-blur-xl z-50">
         <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
 
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="text-3xl font-bold tracking-tight">
             ShortForge AI
           </h1>
 
-          <div className="flex gap-3">
+          <div className="flex items-center gap-4">
 
-          <div className="px-4 py-2 rounded-xl bg-white/10 text-sm">
-  Credits: {credits}
-</div>
+            {isSignedIn && (
+              <>
+                <div className="px-4 py-2 rounded-xl bg-white/10 text-sm">
+                  Credits: {credits}
+                </div>
 
-  <Button
-    onClick={() => buyCredits(9900, 10)}
-    className="bg-purple-600 hover:bg-purple-700"
-  >
-    ₹99
-  </Button>
+                <Button
+                  onClick={() => buyCredits(99)}
+                  className="bg-purple-600 hover:bg-purple-700 rounded-xl"
+                >
+                  ₹99
+                </Button>
 
-  <Button
-    onClick={() => buyCredits(29900, 50)}
-    className="bg-purple-600 hover:bg-purple-700"
-  >
-    ₹299
-  </Button>
+                <Button
+                  onClick={() => buyCredits(299)}
+                  className="bg-purple-600 hover:bg-purple-700 rounded-xl"
+                >
+                  ₹299
+                </Button>
 
-  <Button
-    onClick={() => buyCredits(99900, 250)}
-    className="bg-purple-600 hover:bg-purple-700"
-  >
-    ₹999
-  </Button>
+                <Button
+                  onClick={() => buyCredits(999)}
+                  className="bg-purple-600 hover:bg-purple-700 rounded-xl"
+                >
+                  ₹999
+                </Button>
 
-</div>
+                <UserButton />
+              </>
+            )}
+
+            {!isSignedIn && (
+              <SignInButton mode="modal">
+                <Button className="bg-white text-black hover:bg-zinc-200 rounded-xl">
+                  Login
+                </Button>
+              </SignInButton>
+            )}
+
+          </div>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="flex items-center justify-center px-6 py-24 relative z-10">
+      {/* Hero */}
+      <section className="py-28 px-6 text-center">
 
-        <div className="max-w-6xl text-center">
+        <div className="max-w-5xl mx-auto">
 
-          <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-zinc-300 mb-8">
+          <div className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-5 py-2 text-sm mb-8">
             AI-powered viral content engine
           </div>
 
-          <h1 className="text-8xl font-bold tracking-tight leading-tight mb-6">
-            Generate Viral <br />
+          <h1 className="text-6xl md:text-8xl font-black leading-tight tracking-tight">
+            Generate Viral
+            <br />
             Reels Scripts Instantly
           </h1>
 
-          <p className="text-zinc-400 text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-8 text-xl text-zinc-400 max-w-3xl mx-auto leading-relaxed">
             Create hooks, scripts, scene ideas, captions and B-roll concepts
             for Instagram Reels and YouTube Shorts using AI.
           </p>
 
-          <div className="flex items-center justify-center gap-4">
+          <div className="mt-10 flex items-center justify-center gap-4">
 
-            <Button className="rounded-2xl px-8 py-6 text-lg">
+            <Button
+              size="lg"
+              className="bg-white text-black hover:bg-zinc-200 rounded-2xl px-8"
+              onClick={() => {
+                document
+                  .getElementById("generator")
+                  ?.scrollIntoView({ behavior: "smooth" });
+              }}
+            >
               Start Creating
             </Button>
 
             <Button
               variant="outline"
-              className="rounded-2xl px-8 py-6 text-lg bg-transparent border-white/20"
+              size="lg"
+              className="rounded-2xl border-white/10 bg-transparent"
             >
               Watch Demo
             </Button>
 
           </div>
+
+          <div className="mt-12 text-zinc-500 text-sm">
+            Trusted by creators • 10,000+ scripts generated
+          </div>
+
         </div>
       </section>
 
-      {/* Input Section */}
-      <section className="px-6 pb-32 relative z-10">
+      {/* How It Works */}
+      <section className="max-w-6xl mx-auto px-6 py-10">
 
-        <div className="max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-6">
 
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl">
+          <div className="border border-white/10 bg-white/5 rounded-3xl p-8">
+            <div className="text-purple-400 text-4xl font-bold">1</div>
 
-            <h2 className="text-3xl font-bold mb-6">
-              Create Your Script
-            </h2>
+            <h3 className="text-2xl font-bold mt-4">
+              Enter Topic
+            </h3>
 
-            <textarea
-              placeholder="Enter your video topic..."
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              className="w-full h-40 rounded-2xl bg-black/40 border border-white/10 p-5 text-lg outline-none resize-none"
-            />
-
-            <p className="text-sm text-zinc-500 mt-3">
-              Try topics like: &quot;Money mindset&quot;, &quot;Why people fail&quot;
+            <p className="text-zinc-400 mt-3">
+              Enter any niche, idea or topic for your next viral reel.
             </p>
+          </div>
 
-            <div className="flex gap-4 mt-6 flex-wrap">
+          <div className="border border-white/10 bg-white/5 rounded-3xl p-8">
+            <div className="text-purple-400 text-4xl font-bold">2</div>
 
-              <Button variant="secondary">
-                Motivational
-              </Button>
+            <h3 className="text-2xl font-bold mt-4">
+              AI Creates Script
+            </h3>
 
-              <Button variant="secondary">
-                Dark
-              </Button>
+            <p className="text-zinc-400 mt-3">
+              Generate hooks, storytelling, scenes and cinematic B-roll ideas.
+            </p>
+          </div>
 
-              <Button variant="secondary">
-                Cinematic
-              </Button>
+          <div className="border border-white/10 bg-white/5 rounded-3xl p-8">
+            <div className="text-purple-400 text-4xl font-bold">3</div>
 
-              <Button variant="secondary">
-                Luxury
-              </Button>
+            <h3 className="text-2xl font-bold mt-4">
+              Post & Grow
+            </h3>
 
-            </div>
+            <p className="text-zinc-400 mt-3">
+              Turn scripts into viral Instagram Reels and YouTube Shorts.
+            </p>
+          </div>
 
-            <Button
-              onClick={generateScript}
-              className="w-full mt-8 rounded-2xl py-6 text-lg"
-            >
-              {loading ? "Generating..." : "Generate Script"}
-            </Button>
+        </div>
+      </section>
 
-            {error && (
-              <div className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-red-400">
-                {error}
-              </div>
-            )}
+      {/* Generator */}
+      <section
+        id="generator"
+        className="max-w-5xl mx-auto px-6 py-24"
+      >
 
-            {result && (
+        <div className="border border-white/10 bg-white/5 rounded-[40px] p-10">
 
-              <div className="mt-10 rounded-3xl border border-white/10 bg-black/40 p-8">
+          <h2 className="text-5xl font-black mb-10">
+            Create Your Script
+          </h2>
 
-                <div className="flex items-center justify-between mb-6">
+          <textarea
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            placeholder='Try topics like: "Money mindset", "Why people fail"'
+            className="w-full h-44 rounded-3xl bg-black border border-white/10 p-6 text-lg outline-none"
+          />
 
-                  <h3 className="text-2xl font-bold">
-                    Generated Script
-                  </h3>
+          <div className="flex flex-wrap gap-3 mt-6">
 
-                </div>
-
-                <div className="prose prose-invert prose-headings:text-white prose-p:text-zinc-300 max-w-none">
-
-                  <ReactMarkdown>
-                    {result}
-                  </ReactMarkdown>
-
-                </div>
-
-              </div>
-            )}
+            {["Motivational", "Dark", "Cinematic", "Luxury"].map((item) => (
+              <button
+                key={item}
+                onClick={() => setTopic(item)}
+                className="px-5 py-2 rounded-full bg-white/10 hover:bg-white/20 transition"
+              >
+                {item}
+              </button>
+            ))}
 
           </div>
+
+          <Button
+            onClick={generateScript}
+            disabled={loading}
+            className="mt-8 w-full h-14 rounded-2xl bg-purple-600 hover:bg-purple-700 text-lg"
+          >
+            {loading ? "Generating..." : "Generate Script"}
+          </Button>
+
+          {error && (
+            <div className="mt-6 bg-red-500/10 border border-red-500/20 text-red-400 p-5 rounded-2xl">
+              {error}
+            </div>
+          )}
+
+          {result && (
+            <div className="mt-10 border border-white/10 bg-black rounded-3xl p-8 prose prose-invert max-w-none">
+              <ReactMarkdown>
+                {result}
+              </ReactMarkdown>
+            </div>
+          )}
+
         </div>
+
       </section>
+
+      {/* Pricing */}
+      <section className="max-w-6xl mx-auto px-6 py-24">
+
+        <div className="text-center mb-16">
+
+          <h2 className="text-5xl font-black">
+            Simple Pricing
+          </h2>
+
+          <p className="text-zinc-400 mt-4 text-lg">
+            Buy credits and generate unlimited viral ideas.
+          </p>
+
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6">
+
+          <div className="border border-white/10 bg-white/5 rounded-3xl p-10">
+            <h3 className="text-3xl font-bold">
+              Starter
+            </h3>
+
+            <div className="text-5xl font-black mt-6">
+              ₹99
+            </div>
+
+            <p className="text-zinc-400 mt-4">
+              10 AI Credits
+            </p>
+
+            <Button
+              onClick={() => buyCredits(99)}
+              className="w-full mt-8 rounded-2xl bg-purple-600 hover:bg-purple-700"
+            >
+              Buy Now
+            </Button>
+          </div>
+
+          <div className="border border-purple-500 bg-purple-500/10 rounded-3xl p-10 scale-105">
+            <div className="text-sm text-purple-300 mb-4">
+              MOST POPULAR
+            </div>
+
+            <h3 className="text-3xl font-bold">
+              Pro
+            </h3>
+
+            <div className="text-5xl font-black mt-6">
+              ₹299
+            </div>
+
+            <p className="text-zinc-400 mt-4">
+              50 AI Credits
+            </p>
+
+            <Button
+              onClick={() => buyCredits(299)}
+              className="w-full mt-8 rounded-2xl bg-purple-600 hover:bg-purple-700"
+            >
+              Buy Now
+            </Button>
+          </div>
+
+          <div className="border border-white/10 bg-white/5 rounded-3xl p-10">
+            <h3 className="text-3xl font-bold">
+              Unlimited
+            </h3>
+
+            <div className="text-5xl font-black mt-6">
+              ₹999
+            </div>
+
+            <p className="text-zinc-400 mt-4">
+              999 AI Credits
+            </p>
+
+            <Button
+              onClick={() => buyCredits(999)}
+              className="w-full mt-8 rounded-2xl bg-purple-600 hover:bg-purple-700"
+            >
+              Buy Now
+            </Button>
+          </div>
+
+        </div>
+
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-white/10 py-10 text-center text-zinc-500">
+        © 2026 ShortForge AI. All rights reserved.
+      </footer>
 
     </main>
   );
