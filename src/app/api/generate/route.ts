@@ -103,6 +103,14 @@ Make the content cinematic, emotional and highly engaging.
       })
       .eq("user_id", userId);
 
+    await supabase.from("scripts").insert([
+  {
+    user_id: userId,
+    topic,
+    content: completion.choices[0].message.content,
+  },
+]);
+
     return Response.json({
       result: completion.choices[0].message.content,
       credits: userData.credits - 1,

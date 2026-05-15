@@ -8,6 +8,8 @@ import {
   UserButton,
   useUser,
 } from "@clerk/nextjs";
+import { useEffect } from "react";
+import jsPDF from "jspdf";
 
 declare global {
   interface Window {
@@ -23,6 +25,7 @@ export default function Home() {
   const [result, setResult] = useState("");
   const [error, setError] = useState("");
   const [credits, setCredits] = useState(5);
+  const [scripts, setScripts] = useState<unknown[]>([]);
 
   // Generate Script
   const generateScript = async () => {
@@ -112,6 +115,70 @@ export default function Home() {
       alert("Payment failed");
     }
   };
+  const fetchScripts = async () => {
+
+  try {
+
+    const response = await fetch("/api/scripts");
+
+    const data = await response.json();
+
+    setScripts(data);
+
+  } catch (error) {
+
+    console.log(error);
+
+  }
+};
+const copyScript = async () => {
+
+  try {
+
+    await navigator.clipboard.writeText(result);
+
+    alert("Script copied!");
+
+  } catch (error) {
+
+    console.log(error);
+
+  }
+};
+
+const downloadTXT = () => {
+
+  const element = document.createElement("a");
+
+  const file = new Blob([result], {
+    type: "text/plain",
+  });
+
+  element.href = URL.createObjectURL(file);
+
+  element.download = "shortforge-script.txt";
+
+  document.body.appendChild(element);
+
+  element.click();
+};
+
+const downloadPDF = () => {
+
+  const doc = new jsPDF();
+
+  const lines = doc.splitTextToSize(result, 180);
+
+  doc.text(lines, 10, 10);
+
+  doc.save("shortforge-script.pdf");
+};
+
+useEffect(() => {
+
+  fetchScripts();
+
+}, []);
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -313,6 +380,30 @@ export default function Home() {
 
           {result && (
             <div className="mt-10 border border-white/10 bg-black rounded-3xl p-8 prose prose-invert max-w-none">
+              <div className="flex gap-3 mb-6 flex-wrap">
+
+  <Button
+    onClick={copyScript}
+    className="rounded-xl"
+  >
+    Copy
+  </Button>
+
+  <Button
+    onClick={downloadTXT}
+    className="rounded-xl"
+  >
+    Download TXT
+  </Button>
+
+  <Button
+    onClick={downloadPDF}
+    className="rounded-xl"
+  >
+    Download PDF
+  </Button>
+
+</div>
               <ReactMarkdown>
                 {result}
               </ReactMarkdown>
@@ -322,6 +413,55 @@ export default function Home() {
         </div>
 
       </section>
+
+      {/* Recent Scripts */}
+<section className="max-w-6xl mx-auto px-6 pb-24">
+
+  <h2 className="text-4xl font-black mb-10">
+    Recent Scripts
+  </h2>
+
+  <div className="grid md:grid-cols-2 gap-6">
+
+    {scripts.map((script) => (
+
+      <div
+        key={script.id}
+        className="border border-white/10 bg-white/5 rounded-3xl p-6"
+      >
+
+        <div className="text-sm text-purple-400 mb-3">
+          {new Date(script.created_at).toLocaleDateString()}
+        </div>
+
+        <h3 className="text-2xl font-bold mb-4">
+          {script.topic}
+        </h3>
+
+        <p className="text-zinc-400 line-clamp-4">
+          {script.content}
+        </p>
+
+        <Button
+          className="mt-6 rounded-xl"
+          onClick={() => {
+            setResult(script.content);
+            window.scrollTo({
+              top: 800,
+              behavior: "smooth",
+            });
+          }}
+        >
+          Open Script
+        </Button>
+
+      </div>
+
+    ))}
+
+  </div>
+
+</section>
 
       {/* Pricing */}
       <section className="max-w-6xl mx-auto px-6 py-24">
