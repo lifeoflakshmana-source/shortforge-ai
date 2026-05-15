@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     });
 
     return Response.json({
-      image: response.data[0].b64_json,
+      image: response.data?.[0]?.b64_json || "",
     });
 
   } catch (error) {
