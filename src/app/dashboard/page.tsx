@@ -440,7 +440,7 @@ await fetch("/api/credits", {
 
         <div className="grid gap-6">
 
-          {scripts.map((script) => (
+          {scripts.map((script: any) => (
 
             <div
               key={script.id}
