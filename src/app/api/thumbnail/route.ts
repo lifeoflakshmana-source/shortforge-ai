@@ -11,8 +11,25 @@ export async function POST(req: Request) {
 
     const response = await openai.images.generate({
       model: "gpt-image-1",
-      prompt: `Create a cinematic viral YouTube thumbnail about ${prompt}`,
-      size: "1024x1024",
+      prompt: `
+Create an ultra realistic cinematic YouTube thumbnail about: ${prompt}.
+
+Style:
+- Viral YouTube thumbnail
+- High contrast
+- Emotional faces
+- Dramatic lighting
+- Bold composition
+- Ultra detailed
+- Sharp focus
+- Vibrant colors
+- Professional Photoshop look
+- MrBeast style thumbnail
+- Big readable text
+- Clickworthy
+- 4K quality
+`,
+      size: "1536x1024",
     });
 
     return NextResponse.json({

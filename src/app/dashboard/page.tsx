@@ -143,16 +143,21 @@ fetchScripts();
   try {
     setThumbnailLoading(true);
 
-    const response = await fetch("/api/thumbnail", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        prompt: thumbnailPrompt,
-      }),
-    });
+    const enhancedPrompt =
+  "Ultra realistic cinematic YouTube thumbnail about " +
+  thumbnailPrompt +
+  ", dramatic lighting, emotional reactions, viral YouTube thumbnail style, high contrast, vibrant colors, sharp focus";
 
+const response = await fetch("/api/thumbnail", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+
+  body: JSON.stringify({
+    prompt: enhancedPrompt,
+  }),
+});
     const data = await response.json();
     setThumbnail(data.image);
 
@@ -453,7 +458,7 @@ await fetch("/api/credits", {
   <Button
     onClick={generateThumbnail}
     disabled={thumbnailLoading}
-    className="mt-6 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:scale-105 transition-all duration-300 text-white px-8 py-6 rounded-2xl text-lg font-bold"
+    className="disabled:opacity-50 disabled:cursor-not-allowed mt-6 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:scale-105 transition-all duration-300 text-white px-8 py-6 rounded-2xl text-lg font-bold"
   >
     {thumbnailLoading
       ? "Generating Thumbnail..."
