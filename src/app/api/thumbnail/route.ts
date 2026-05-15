@@ -13,34 +13,39 @@ export async function POST(req: Request) {
     const { prompt } = body;
 
     const response = await openai.images.generate({
-      model: "gpt-image-1",
+      model: "dall-e-3",
       prompt: `
-      Create a highly viral YouTube thumbnail.
+Create a cinematic viral YouTube thumbnail.
 
-      Style:
-      cinematic,
-      ultra detailed,
-      bold text,
-      high contrast,
-      emotional,
-      clickworthy.
+Topic:
+${prompt}
 
-      Topic:
-      ${prompt}
-      `,
+Style:
+ultra realistic,
+high contrast,
+dramatic lighting,
+clickworthy,
+bold,
+viral,
+professional YouTube thumbnail
+`,
       size: "1024x1024",
+      quality: "standard",
+      n: 1,
     });
 
+    const imageUrl = response.data?.[0]?.url;
+
     return Response.json({
-      image: response.data?.[0]?.b64_json || "",
+      image: imageUrl,
     });
 
   } catch (error) {
 
-    console.log(error);
+    console.log("THUMBNAIL ERROR:", error);
 
     return Response.json({
-      error: "Failed to generate thumbnail",
+      error: "Thumbnail generation failed",
     });
   }
 }

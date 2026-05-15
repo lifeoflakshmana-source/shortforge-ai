@@ -159,9 +159,7 @@ fetchScripts();
 
     if (data.image) {
 
-      setThumbnail(
-        `data:image/png;base64,${data.image}`
-      );
+      setThumbnail(data.image);
 
     }
 
