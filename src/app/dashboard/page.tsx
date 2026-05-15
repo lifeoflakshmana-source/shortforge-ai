@@ -14,7 +14,22 @@ export default function DashboardPage() {
   const [credits, setCredits] = useState(5);
   const [thumbnailPrompt, setThumbnailPrompt] = useState("");
   const [thumbnailLoading, setThumbnailLoading] = useState(false);
-  const [thumbnail, setThumbnail] = useState("");
+  const [thumbnails, setThumbnails] = useState<string[]>([]);
+  const [thumbnailHistory, setThumbnailHistory] = useState<string[]>([]);
+  const [aspectRatio, setAspectRatio] =
+  useState("16:9");
+
+  useEffect(() => {
+  const savedHistory = localStorage.getItem(
+    "thumbnailHistory"
+  );
+
+  if (savedHistory) {
+    setThumbnailHistory(
+      JSON.parse(savedHistory)
+    );
+  }
+}, []);
 
   useEffect(() => {
 
@@ -137,29 +152,53 @@ fetchScripts();
     }
   };
 
-  const generateThumbnail = async () => {
-  if (!thumbnailPrompt) return;
 
+const generateThumbnail = async () => {
   try {
     setThumbnailLoading(true);
 
-    const enhancedPrompt =
-  "Ultra realistic cinematic YouTube thumbnail about " +
-  thumbnailPrompt +
-  ", dramatic lighting, emotional reactions, viral YouTube thumbnail style, high contrast, vibrant colors, sharp focus";
+    const enhancedPrompt = `
+Ultra realistic cinematic YouTube thumbnail,
+${thumbnailPrompt},
+MrBeast style,
+viral thumbnail,
+dramatic lighting,
+high contrast,
+4k,
+emotional faces,
+professional Photoshop composition
+`;
 
-const response = await fetch("/api/thumbnail", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
+    const response = await fetch("/api/thumbnail", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt: enhancedPrompt,
+        aspectRatio,
+      }),
+    });
 
-  body: JSON.stringify({
-    prompt: enhancedPrompt,
-  }),
-});
     const data = await response.json();
-    setThumbnail(data.image);
+
+    const images = data.images || [data.image];
+
+    setThumbnails(images);
+
+    setThumbnailHistory((prev) => {
+      const updatedHistory = [
+        ...images,
+        ...prev,
+      ];
+
+      localStorage.setItem(
+        "thumbnailHistory",
+        JSON.stringify(updatedHistory)
+      );
+
+      return updatedHistory;
+    });
 
   } catch (error) {
     console.log(error);
@@ -168,6 +207,10 @@ const response = await fetch("/api/thumbnail", {
     setThumbnailLoading(false);
   }
 };
+
+    
+
+
 
   const buyCredits = async () => {
 
@@ -420,13 +463,6 @@ await fetch("/api/credits", {
 
       </div>
 
-      {/* Thumbnail Generator Preview */}
-
-      <div className="max-w-6xl mx-auto mt-20 border border-purple-500/20 rounded-[32px] bg-zinc-950/70 backdrop-blur-xl p-8">
-
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-
-          <div>
 
             {/* AI Thumbnail Generator */}
 
@@ -454,54 +490,149 @@ await fetch("/api/credits", {
     placeholder="Enter thumbnail idea..."
     className="w-full h-36 bg-black/80 border border-white/10 rounded-3xl p-6 text-xl outline-none resize-none focus:border-purple-500 transition-all duration-300"
   />
+  <div className="flex flex-wrap gap-3 mt-6">
+  {[
+    "MrBeast Challenge",
+    "AI vs Humans",
+    "Dark Motivation",
+    "Luxury Lifestyle",
+    "Anime Battle",
+    "Fitness Transformation",
+  ].map((idea) => (
+    <button
+      key={idea}
+      onClick={() =>
+        setThumbnailPrompt(idea)
+      }
+      className="px-4 py-2 rounded-2xl bg-white/5 border border-white/10 hover:bg-purple-600 transition-all"
+    >
+      {idea}
+    </button>
+  ))}
+</div>
+  <div className="flex gap-4 mt-4">
+  {["16:9", "1:1", "9:16"].map((ratio) => (
+    <button
+      key={ratio}
+      onClick={() => setAspectRatio(ratio)}
+      className={`px-5 py-2 rounded-2xl border transition-all duration-300 ${
+        aspectRatio === ratio
+          ? "bg-purple-600 border-purple-600"
+          : "border-white/10"
+      }`}
+    >
+      {ratio}
+    </button>
+  ))}
+</div>
 
   <Button
-    onClick={generateThumbnail}
-    disabled={thumbnailLoading}
-    className="disabled:opacity-50 disabled:cursor-not-allowed mt-6 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:scale-105 transition-all duration-300 text-white px-8 py-6 rounded-2xl text-lg font-bold"
+  onClick={generateThumbnail}
+  disabled={thumbnailLoading}
+  className="bg-gradient-to-r from-pink-500 to-purple-600 hover:scale-105 transition-all duration-300 disabled:opacity-50"
+>
+  {thumbnailLoading ? (
+    <div className="flex items-center gap-2">
+      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+      Generating...
+    </div>
+  ) : (
+    "🎨 Generate Thumbnail"
+  )}
+</Button>
+
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
+{thumbnails.map((image, index) => (
+  <div
+    key={index}
+    className="rounded-3xl overflow-hidden border border-white/10 bg-black"
   >
-    {thumbnailLoading
-      ? "Generating Thumbnail..."
-      : "🎨 Generate Thumbnail"}
-  </Button>
+    <div className="aspect-video">
 
-  {thumbnail && (
-  <div className="mt-10">
     <img
-      src={thumbnail}
-      alt="Generated Thumbnail"
-      className="rounded-3xl w-full max-w-2xl border border-white/10"
-    />
+  src={
+    image.startsWith("data:image")
+      ? image
+      : `data:image/jpeg;base64,${image}`
+  }
+  alt={`Thumbnail ${index}`}
+  className="rounded-3xl w-full h-full object-cover"
+/>
+      
+    </div>
 
-    <a href={thumbnail} download="thumbnail.png">
-      <Button className="mt-6 bg-white text-black hover:bg-zinc-200 rounded-2xl">
-        Download Thumbnail
-      </Button>
-    </a>
+    <div className="p-4">
+      <a
+        href={
+  image.startsWith("data:image")
+    ? image
+    : `data:image/jpeg;base64,${image}`
+}
+      >
+        <Button className="w-full bg-white text-black hover:bg-zinc-200">
+          Download HD Thumbnail
+        </Button>
+      </a>
+    </div>
   </div>
-)}
+))}
+</div>
 
 </div>
 
-            <p className="text-zinc-400 text-lg">
-              Generate cinematic thumbnails instantly using AI.
-            </p>
+      {thumbnailHistory.length > 0 && (
+  <div className="max-w-6xl mx-auto mt-20">
+
+    <h2 className="text-4xl font-black mb-8">
+      Recent Thumbnails
+    </h2>
+
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+      {thumbnailHistory.map((image, index) => (
+
+        <div
+          key={index}
+          className="rounded-3xl overflow-hidden border border-white/10 bg-black"
+        >
+
+          <img
+            src={
+              image.startsWith("data:image")
+                ? image
+                : `data:image/jpeg;base64,${image}`
+            }
+            alt={`History ${index}`}
+            className="w-full aspect-video object-cover"
+          />
+
+          <div className="p-4">
+
+            <a
+              href={
+                image.startsWith("data:image")
+                  ? image
+                  : `data:image/jpeg;base64,${image}`
+              }
+              download={`thumbnail-${index}.png`}
+            >
+
+              <Button className="w-full bg-white text-black hover:bg-zinc-200">
+                Download
+              </Button>
+
+            </a>
 
           </div>
 
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
+      ))}
 
-          <div className="h-56 rounded-3xl bg-gradient-to-br from-purple-600/30 to-fuchsia-600/20 border border-white/10"></div>
+    </div>
 
-          <div className="h-56 rounded-3xl bg-gradient-to-br from-blue-600/30 to-cyan-600/20 border border-white/10"></div>
-
-          <div className="h-56 rounded-3xl bg-gradient-to-br from-orange-600/30 to-red-600/20 border border-white/10"></div>
-
-        </div>
-
-      </div>
+  </div>
+)}
 
       {/* Recent Scripts */}
 

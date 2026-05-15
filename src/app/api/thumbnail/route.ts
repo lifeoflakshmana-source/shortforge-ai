@@ -1,42 +1,53 @@
-import OpenAI from "openai";
 import { NextResponse } from "next/server";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 export async function POST(req: Request) {
   try {
-    const { prompt } = await req.json();
+    const { prompt, aspectRatio } =
+  await req.json();
 
-    const response = await openai.images.generate({
-      model: "gpt-image-1",
-      prompt: `
-Create an ultra realistic cinematic YouTube thumbnail about: ${prompt}.
+  let width = 1280;
+let height = 720;
 
-Style:
-- Viral YouTube thumbnail
-- High contrast
-- Emotional faces
-- Dramatic lighting
-- Bold composition
-- Ultra detailed
-- Sharp focus
-- Vibrant colors
-- Professional Photoshop look
-- MrBeast style thumbnail
-- Big readable text
-- Clickworthy
-- 4K quality
-`,
-      size: "1536x1024",
-    });
+if (aspectRatio === "1:1") {
+  width = 1024;
+  height = 1024;
+}
+
+if (aspectRatio === "9:16") {
+  width = 720;
+  height = 1280;
+}
+
+    const enhancedPrompt = `
+Ultra realistic cinematic YouTube thumbnail about ${prompt},
+MrBeast style,
+viral thumbnail,
+dramatic lighting,
+high contrast,
+vibrant colors,
+4k,
+emotional reactions,
+professional Photoshop composition,
+sharp focus,
+clickworthy,
+trending YouTube thumbnail
+`;
+    const imageUrl =
+  "https://image.pollinations.ai/prompt/" +
+  encodeURIComponent(enhancedPrompt) +
+  `?width=${width}&height=${height}`;
+
+    const imageResponse = await fetch(imageUrl);
+
+    const buffer = await imageResponse.arrayBuffer();
+
+    const base64 = Buffer.from(buffer).toString("base64");
 
     return NextResponse.json({
-      image: `data:image/png;base64,${response.data?.[0]?.b64_json}`,
+      image: `data:image/jpeg;base64,${base64}`,
     });
   } catch (error) {
-    console.log("THUMBNAIL ERROR:", error);
+    console.log(error);
 
     return NextResponse.json(
       { error: "Failed to generate thumbnail" },
