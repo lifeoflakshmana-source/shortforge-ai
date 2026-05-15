@@ -1,10 +1,15 @@
 "use client";
 
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Razorpay: any;
+  }
+}
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
-import { SignInButton } from "@clerk/nextjs";
-import { UserButton } from "@clerk/nextjs";
 
 export default function Home() {
 
@@ -56,43 +61,71 @@ export default function Home() {
   };
 
   // Buy Credits
-  const buyCredits = async () => {
+  const buyCredits = async (
+  amount: number,
+  creditsToAdd: number
+) => {
 
-    try {
+  try {
 
-      const response = await fetch("/api/payment", {
-        method: "POST",
-      });
+    const response = await fetch("/api/payment", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        amount,
+        credits: creditsToAdd,
+      }),
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: data.amount,
-        currency: data.currency,
-        name: "ShortForge AI",
-        description: "Buy 100 Credits",
-        order_id: data.id,
+    const options = {
+      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
 
-        handler: async function () {
-          alert("Payment Successful!");
-        },
+      amount: data.amount,
 
-        theme: {
-          color: "#7c3aed",
-        },
-      };
+      currency: data.currency,
 
-      const razorpay = new (window as any).Razorpay(options);
+      name: "ShortForge AI",
 
-      razorpay.open();
+      description: "Buy Credits",
 
-    } catch (error) {
+      order_id: data.id,
 
-      console.log(error);
+      handler: async function () {
 
-    }
-  };
+        await fetch("/api/payment/verify", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            credits: creditsToAdd,
+          }),
+        });
+
+        setCredits((prev) => prev + creditsToAdd);
+
+        alert("Payment Successful!");
+      },
+
+      theme: {
+        color: "#7c3aed",
+      },
+    };
+
+    const razorpay = new window.Razorpay(options);
+
+    razorpay.open();
+
+  } catch (error) {
+
+    console.log(error);
+
+  }
+};
 
   return (
     <main className="min-h-screen bg-black text-white relative overflow-hidden">
@@ -109,32 +142,34 @@ export default function Home() {
             ShortForge AI
           </h1>
 
-          <div className="flex items-center gap-4">
+          <div className="flex gap-3">
 
-            <Button
-              onClick={buyCredits}
-              className="rounded-xl bg-purple-600 hover:bg-purple-700"
-            >
-              Buy Credits
-            </Button>
+          <div className="px-4 py-2 rounded-xl bg-white/10 text-sm">
+  Credits: {credits}
+</div>
 
-            <Button variant="ghost">
-              Pricing
-            </Button>
+  <Button
+    onClick={() => buyCredits(9900, 10)}
+    className="bg-purple-600 hover:bg-purple-700"
+  >
+    ₹99
+  </Button>
 
-            <div className="px-4 py-2 rounded-xl bg-white/10 text-sm">
-              Credits: {credits}
-            </div>
+  <Button
+    onClick={() => buyCredits(29900, 50)}
+    className="bg-purple-600 hover:bg-purple-700"
+  >
+    ₹299
+  </Button>
 
-            <SignInButton>
-              <Button className="rounded-xl">
-                Login
-              </Button>
-            </SignInButton>
+  <Button
+    onClick={() => buyCredits(99900, 250)}
+    className="bg-purple-600 hover:bg-purple-700"
+  >
+    ₹999
+  </Button>
 
-            <UserButton />
-
-          </div>
+</div>
         </div>
       </nav>
 
