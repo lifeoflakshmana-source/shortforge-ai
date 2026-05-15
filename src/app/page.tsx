@@ -263,16 +263,12 @@ useEffect(() => {
           <div className="mt-10 flex items-center justify-center gap-4">
 
             <Button
-              size="lg"
-              className="bg-white text-black hover:bg-zinc-200 rounded-2xl px-8"
-              onClick={() => {
-                document
-                  .getElementById("generator")
-                  ?.scrollIntoView({ behavior: "smooth" });
-              }}
-            >
-              Start Creating
-            </Button>
+  size="lg"
+  className="bg-white text-black hover:bg-zinc-200 rounded-2xl px-8"
+  onClick={() => window.location.href="/dashboard"}
+>
+  Start Creating
+</Button>
 
             <Button
               variant="outline"

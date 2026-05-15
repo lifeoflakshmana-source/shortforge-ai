@@ -14,12 +14,10 @@ export async function GET() {
     }
 
     const { data } = await supabase
-      .from("scripts")
-      .select("*")
+      .from("users")
+      .select("credits")
       .eq("user_id", userId)
-      .order("created_at", {
-        ascending: false,
-      });
+      .single();
 
     return Response.json(data);
 
@@ -28,7 +26,7 @@ export async function GET() {
     console.log(error);
 
     return Response.json({
-      error: "Failed to fetch scripts",
+      error: "Failed to fetch credits",
     });
   }
 }
@@ -47,36 +45,25 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
-    const {
-      topic,
-      content,
-      score,
-    } = body;
+    const { credits } = body;
 
-    const { data, error } = await supabase
-      .from("scripts")
-      .insert([
-        {
-          user_id: userId,
-          topic,
-          content,
-          score,
-        },
-      ])
-      .select();
+    await supabase
+      .from("users")
+      .update({
+        credits,
+      })
+      .eq("user_id", userId);
 
-    if (error) {
-      console.log(error);
-    }
-
-    return Response.json(data);
+    return Response.json({
+      success: true,
+    });
 
   } catch (error) {
 
     console.log(error);
 
     return Response.json({
-      error: "Failed to save script",
+      error: "Failed to update credits",
     });
   }
 }
