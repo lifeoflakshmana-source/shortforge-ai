@@ -1,51 +1,29 @@
 import OpenAI from "openai";
+import { NextResponse } from "next/server";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
 export async function POST(req: Request) {
-
   try {
-
-    const body = await req.json();
-
-    const { prompt } = body;
+    const { prompt } = await req.json();
 
     const response = await openai.images.generate({
-      model: "dall-e-3",
-      prompt: `
-Create a cinematic viral YouTube thumbnail.
-
-Topic:
-${prompt}
-
-Style:
-ultra realistic,
-high contrast,
-dramatic lighting,
-clickworthy,
-bold,
-viral,
-professional YouTube thumbnail
-`,
+      model: "gpt-image-1",
+      prompt: `Create a cinematic viral YouTube thumbnail about ${prompt}`,
       size: "1024x1024",
-      quality: "standard",
-      n: 1,
     });
 
-    const imageUrl = response.data?.[0]?.url;
-
-    return Response.json({
-      image: imageUrl,
+    return NextResponse.json({
+      image: `data:image/png;base64,${response.data?.[0]?.b64_json}`,
     });
-
   } catch (error) {
-
     console.log("THUMBNAIL ERROR:", error);
 
-    return Response.json({
-      error: "Thumbnail generation failed",
-    });
+    return NextResponse.json(
+      { error: "Failed to generate thumbnail" },
+      { status: 500 }
+    );
   }
 }

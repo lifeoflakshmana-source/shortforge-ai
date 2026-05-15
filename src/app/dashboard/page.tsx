@@ -138,12 +138,10 @@ fetchScripts();
   };
 
   const generateThumbnail = async () => {
-
   if (!thumbnailPrompt) return;
 
-  setThumbnailLoading(true);
-
   try {
+    setThumbnailLoading(true);
 
     const response = await fetch("/api/thumbnail", {
       method: "POST",
@@ -156,21 +154,13 @@ fetchScripts();
     });
 
     const data = await response.json();
-
-    if (data.image) {
-
-      setThumbnail(data.image);
-
-    }
+    setThumbnail(data.image);
 
   } catch (error) {
-
     console.log(error);
-
+    alert("Failed to generate thumbnail");
   } finally {
-
     setThumbnailLoading(false);
-
   }
 };
 
@@ -471,27 +461,20 @@ await fetch("/api/credits", {
   </Button>
 
   {thumbnail && (
+  <div className="mt-10">
+    <img
+      src={thumbnail}
+      alt="Generated Thumbnail"
+      className="rounded-3xl w-full max-w-2xl border border-white/10"
+    />
 
-    <div className="mt-10">
-
-      <img
-        src={thumbnail}
-        alt="Generated Thumbnail"
-        className="rounded-3xl w-full max-w-2xl border border-white/10"
-      />
-
-      <a
-        href={thumbnail}
-        download="thumbnail.png"
-      >
-        <Button className="mt-6 bg-white text-black hover:bg-zinc-200 rounded-2xl">
-          Download Thumbnail
-        </Button>
-      </a>
-
-    </div>
-
-  )}
+    <a href={thumbnail} download="thumbnail.png">
+      <Button className="mt-6 bg-white text-black hover:bg-zinc-200 rounded-2xl">
+        Download Thumbnail
+      </Button>
+    </a>
+  </div>
+)}
 
 </div>
 
