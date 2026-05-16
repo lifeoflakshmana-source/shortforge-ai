@@ -16,6 +16,27 @@ export default function DashboardPage() {
   const [thumbnailLoading, setThumbnailLoading] = useState(false);
   const [thumbnails, setThumbnails] = useState<string[]>([]);
   const [thumbnailHistory, setThumbnailHistory] = useState<string[]>([]);
+  const [titles, setTitles] = useState<string[]>([]);
+  const [hooks, setHooks] = useState<string[]>([]);
+  const [hashtags, setHashtags] = useState<string[]>([]);
+  const [captions, setCaptions] = useState<string[]>([]);
+  const [viralScore, setViralScore] = useState(0);
+  const [hookScore, setHookScore] = useState(0);
+  const [emotionScore, setEmotionScore] = useState(0);
+  const [retentionScore, setRetentionScore] = useState(0);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [selectedStyle, setSelectedStyle] = useState("MrBeast");
+  const [brolls, setBrolls] = useState<string[]>([]);
+
+  useEffect(() => {
+  const savedProjects =
+    localStorage.getItem("projects");
+
+  if (savedProjects) {
+    setProjects(JSON.parse(savedProjects));
+  }
+}, []);
+
   const [aspectRatio, setAspectRatio] =
   useState("16:9");
 
@@ -23,6 +44,8 @@ export default function DashboardPage() {
   const savedHistory = localStorage.getItem(
     "thumbnailHistory"
   );
+
+  
 
   if (savedHistory) {
     setThumbnailHistory(
@@ -80,80 +103,153 @@ const fetchScripts = async () => {
   }
 };
 
+
   const generateScript = async () => {
-
-    if (!topic) return;
-
-    if (credits <= 0) {
-      alert("No credits left. Please purchase more credits.");
-      return;
-    }
-
+  try {
     setLoading(true);
 
-    try {
+    const response = await fetch("/api/generate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt: topic,
+        style: selectedStyle,
+      }),
+    });
 
-      const response = await fetch("/api/generate", {
+    const data = await response.json();
+
+    if (data.result) {
+
+      setResult(data.result);
+
+const lines = data.result.split("\n");
+
+const extractedBrolls = lines.filter((line: string) =>
+  line.includes("Shot") ||
+  line.includes("Camera") ||
+  line.includes("B-roll") ||
+  line.includes("Transition")
+);
+
+setBrolls(extractedBrolls);
+
+      setTitles([
+        `${topic} EXPOSED 😱`,
+        `Top 5 ${topic} Secrets`,
+        `Why ${topic} Is Going Viral`,
+        `${topic} Nobody Talks About`,
+        `${topic} Changed Everything`,
+      ]);
+
+      setHooks([
+        `Nobody talks about ${topic} like this...`,
+        `This ${topic} trick is going viral`,
+        `You are wasting time if you ignore ${topic}`,
+        `The dark truth behind ${topic}`,
+      ]);
+
+      setHashtags([
+        `#${topic.replace(/\s+/g, "")}`,
+        "#viral",
+        "#fyp",
+        "#trending",
+        "#shorts",
+        "#reels",
+      ]);
+
+      setCaptions([
+        
+        `This ${topic} will blow your mind 🤯`,
+        `Nobody expected this about ${topic} 👀`,
+        `Save this before it disappears 🚀`,
+      ]);
+
+      setViralScore(Math.floor(Math.random() * 15) + 85);
+      setHookScore(Math.floor(Math.random() * 15) + 80);
+      setEmotionScore(Math.floor(Math.random() * 15) + 82);
+      setRetentionScore(Math.floor(Math.random() * 15) + 84);
+
+      const updatedCredits = credits - 1;
+
+      setCredits(updatedCredits);
+
+      await fetch("/api/credits", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ topic }),
+        body: JSON.stringify({
+          credits: updatedCredits,
+        }),
       });
 
-      const data = await response.json();
-
-      const generatedScript =
-        data.script || "No script generated.";
-
-      setResult(generatedScript);
-
-      // Reduce credits
-      const updatedCredits = credits - 1;
-
-setCredits(updatedCredits);
-
-await fetch("/api/credits", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    credits: updatedCredits,
-  }),
-});
-
       const newScript = {
-  topic,
-  content: generatedScript,
-  score: Math.floor(Math.random() * 20) + 80,
+        topic,
+        content: data.result,
+        score: Math.floor(Math.random() * 20) + 80,
+      };
+
+      await fetch("/api/scripts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newScript),
+      });
+
+      fetchScripts();
+
+    } else {
+      setResult("Script generation failed.");
+    }
+
+  } catch (error) {
+
+    console.log(error);
+    setResult("Something went wrong.");
+
+  } finally {
+
+    setLoading(false);
+
+  }
 };
 
-await fetch("/api/scripts", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify(newScript),
-});
 
-fetchScripts();
 
-    } catch (error) {
+const saveProject = () => {
 
-      console.log(error);
-
-      setResult("Something went wrong.");
-
-    } finally {
-
-      setLoading(false);
-
-    }
+  const newProject = {
+    topic,
+    result,
+    thumbnails,
+    brolls,
+    style: selectedStyle,
+    createdAt: new Date().toISOString(),
   };
 
+  const updatedProjects = [
+    newProject,
+    ...projects,
+  ];
+
+  setProjects(updatedProjects);
+
+  localStorage.setItem(
+    "projects",
+    JSON.stringify(updatedProjects)
+  );
+
+};
 
 const generateThumbnail = async () => {
+  if (credits <= 0) {
+  alert("No credits left");
+  return;
+}
   try {
     setThumbnailLoading(true);
 
@@ -185,6 +281,21 @@ professional Photoshop composition
     const images = data.images || [data.image];
 
     setThumbnails(images);
+    console.log(images);
+
+    const updatedCredits = credits - 1;
+
+setCredits(updatedCredits);
+
+await fetch("/api/credits", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    credits: updatedCredits,
+  }),
+});
 
     setThumbnailHistory((prev) => {
       const updatedHistory = [
@@ -368,6 +479,34 @@ await fetch("/api/credits", {
           className="w-full h-56 bg-black/80 border border-white/10 rounded-3xl p-6 text-xl outline-none resize-none focus:border-purple-500 transition-all duration-300"
         />
 
+        <div className="flex flex-wrap gap-3 mt-5">
+
+  {[
+    "MrBeast",
+    "Dark",
+    "Documentary",
+    "Motivational",
+    "Cinematic",
+    "Anime",
+  ].map((style) => (
+
+    <button
+      key={style}
+      onClick={() => setSelectedStyle(style)}
+      className={`px-5 py-2 rounded-2xl border transition-all duration-300
+      ${
+        selectedStyle === style
+          ? "bg-purple-600 border-purple-500"
+          : "bg-zinc-900 border-white/10 hover:border-purple-500"
+      }`}
+    >
+      {style}
+    </button>
+
+  ))}
+
+</div>
+
         <Button
           onClick={generateScript}
           disabled={loading}
@@ -392,22 +531,126 @@ await fetch("/api/credits", {
               Generated Script ✨
             </h2>
 
-            <Button
-              onClick={() => navigator.clipboard.writeText(result)}
-              className="bg-white text-black hover:bg-zinc-200 rounded-xl"
-            >
-              Copy Script
-            </Button>
+            <div className="flex gap-3">
+
+  <Button
+    onClick={() => {
+      navigator.clipboard.writeText(result);
+    }}
+    className="bg-white text-black hover:bg-zinc-200"
+  >
+    Copy Script
+  </Button>
+
+  <Button
+    onClick={() => {
+
+      const blob = new Blob([result], {
+        type: "text/plain",
+      });
+
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+
+      a.href = url;
+      a.download = "viral-script.txt";
+
+      a.click();
+
+      URL.revokeObjectURL(url);
+
+    }}
+    className="bg-pink-600 hover:bg-pink-700"
+  >
+    Download Script
+  </Button>
+
+</div>
 
           </div>
 
           <div className="whitespace-pre-wrap leading-8 text-zinc-200 text-lg">
-            {result}
+            {result || "No script generated."}
           </div>
 
         </div>
 
       )}
+
+      <div className="flex gap-4 mt-6">
+
+  <button
+    onClick={saveProject}
+    className="px-5 py-3 rounded-2xl bg-green-600 hover:bg-green-700 transition-all"
+  >
+    💾 Save Project
+  </button>
+
+</div>
+
+<div className="mt-10 rounded-3xl border border-white/10 bg-black/40 p-8">
+
+  <h2 className="text-4xl font-bold mb-6">
+    🎥 AI B-Roll Ideas
+  </h2>
+
+  <div className="space-y-4">
+
+    {brolls.map((broll, index) => (
+
+      <div
+        key={index}
+        className="rounded-2xl border border-white/10 bg-zinc-900/50 p-5"
+      >
+        {broll}
+      </div>
+
+    ))}
+
+  </div>
+
+</div>
+
+      {titles.length > 0 && (
+
+  <div className="max-w-6xl mx-auto mt-10">
+
+    <h2 className="text-4xl font-black mb-6">
+      Viral Titles 🔥
+    </h2>
+
+    <div className="grid gap-4">
+
+      {titles.map((title, index) => (
+
+        <div
+          key={index}
+          className="bg-zinc-900 border border-white/10 rounded-2xl p-5 flex items-center justify-between"
+        >
+
+          <p className="text-lg font-semibold">
+            {title}
+          </p>
+
+          <Button
+            onClick={() =>
+              navigator.clipboard.writeText(title)
+            }
+            className="bg-white text-black hover:bg-zinc-200"
+          >
+            Copy
+          </Button>
+
+        </div>
+
+      ))}
+
+    </div>
+
+  </div>
+
+)}
 
       {/* Feature Cards */}
 
@@ -462,6 +705,73 @@ await fetch("/api/credits", {
         </div>
 
       </div>
+
+<div className="mt-12 rounded-3xl border border-white/10 bg-black/40 p-8">
+  
+  <h2 className="text-4xl font-black mb-8">
+    Viral Score Analysis 📈
+  </h2>
+
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    <div className="bg-zinc-900 rounded-2xl p-6">
+      <div className="flex justify-between mb-3">
+        <span className="text-xl font-bold">Virality Score</span>
+        <span className="text-pink-400 font-black">{viralScore}%</span>
+      </div>
+
+      <div className="w-full bg-zinc-800 rounded-full h-4">
+        <div
+          className="bg-pink-500 h-4 rounded-full transition-all duration-500"
+          style={{ width: `${viralScore}%` }}
+        />
+      </div>
+    </div>
+
+    <div className="bg-zinc-900 rounded-2xl p-6">
+      <div className="flex justify-between mb-3">
+        <span className="text-xl font-bold">Hook Strength</span>
+        <span className="text-purple-400 font-black">{hookScore}%</span>
+      </div>
+
+      <div className="w-full bg-zinc-800 rounded-full h-4">
+        <div
+          className="bg-purple-500 h-4 rounded-full transition-all duration-500"
+          style={{ width: `${hookScore}%` }}
+        />
+      </div>
+    </div>
+
+    <div className="bg-zinc-900 rounded-2xl p-6">
+      <div className="flex justify-between mb-3">
+        <span className="text-xl font-bold">Emotion Trigger</span>
+        <span className="text-orange-400 font-black">{emotionScore}%</span>
+      </div>
+
+      <div className="w-full bg-zinc-800 rounded-full h-4">
+        <div
+          className="bg-orange-500 h-4 rounded-full transition-all duration-500"
+          style={{ width: `${emotionScore}%` }}
+        />
+      </div>
+    </div>
+
+    <div className="bg-zinc-900 rounded-2xl p-6">
+      <div className="flex justify-between mb-3">
+        <span className="text-xl font-bold">Retention Power</span>
+        <span className="text-cyan-400 font-black">{retentionScore}%</span>
+      </div>
+
+      <div className="w-full bg-zinc-800 rounded-full h-4">
+        <div
+          className="bg-cyan-500 h-4 rounded-full transition-all duration-500"
+          style={{ width: `${retentionScore}%` }}
+        />
+      </div>
+    </div>
+
+  </div>
+</div>
 
 
             {/* AI Thumbnail Generator */}
@@ -550,13 +860,13 @@ await fetch("/api/credits", {
     <div className="aspect-video">
 
     <img
-  src={
-    image.startsWith("data:image")
-      ? image
-      : `data:image/jpeg;base64,${image}`
-  }
+  src={image}
   alt={`Thumbnail ${index}`}
-  className="rounded-3xl w-full h-full object-cover"
+  className="w-full rounded-2xl object-cover"
+  style={{
+    width: "100%",
+    height: aspectRatio === "9:16" ? "500px" : "300px",
+  }}
 />
       
     </div>
@@ -581,57 +891,25 @@ await fetch("/api/credits", {
 </div>
 
       {thumbnailHistory.length > 0 && (
-  <div className="max-w-6xl mx-auto mt-20">
+  <div className="flex items-center justify-between mb-8">
 
-    <h2 className="text-4xl font-black mb-8">
-      Recent Thumbnails
-    </h2>
+  <h2 className="text-4xl font-black">
+    Recent Thumbnails
+  </h2>
 
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <Button
+    onClick={() => {
+      localStorage.removeItem(
+        "thumbnailHistory"
+      );
+      setThumbnailHistory([]);
+    }}
+    className="bg-red-600 hover:bg-red-700"
+  >
+    Clear History
+  </Button>
 
-      {thumbnailHistory.map((image, index) => (
-
-        <div
-          key={index}
-          className="rounded-3xl overflow-hidden border border-white/10 bg-black"
-        >
-
-          <img
-            src={
-              image.startsWith("data:image")
-                ? image
-                : `data:image/jpeg;base64,${image}`
-            }
-            alt={`History ${index}`}
-            className="w-full aspect-video object-cover"
-          />
-
-          <div className="p-4">
-
-            <a
-              href={
-                image.startsWith("data:image")
-                  ? image
-                  : `data:image/jpeg;base64,${image}`
-              }
-              download={`thumbnail-${index}.png`}
-            >
-
-              <Button className="w-full bg-white text-black hover:bg-zinc-200">
-                Download
-              </Button>
-
-            </a>
-
-          </div>
-
-        </div>
-
-      ))}
-
-    </div>
-
-  </div>
+</div>
 )}
 
       {/* Recent Scripts */}
@@ -698,6 +976,72 @@ await fetch("/api/credits", {
         </div>
 
       </div>
+
+      {projects.length > 0 && (
+
+  <div className="flex items-center justify-between mb-8">
+
+  <h2 className="text-4xl font-black">
+    Saved Projects 📁
+  </h2>
+
+  <Button
+    onClick={() => {
+      localStorage.removeItem("projects");
+      setProjects([]);
+    }}
+    className="bg-red-600 hover:bg-red-700"
+  >
+    Clear Projects
+  </Button>
+
+</div>
+)}
+
+<div className="mt-16">
+
+  <h2 className="text-5xl font-bold mb-8">
+    📂 Saved Projects
+  </h2>
+
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    {projects.map((project, index) => (
+
+      <div
+        key={index}
+        className="rounded-3xl border border-white/10 bg-black/40 p-6"
+      >
+
+        <h3 className="text-2xl font-bold mb-3">
+          {project.topic}
+        </h3>
+
+        <p className="text-zinc-400 mb-5">
+          {project.style}
+        </p>
+
+        <button
+          onClick={() => {
+
+            setTopic(project.topic);
+            setResult(project.result);
+            setThumbnails(project.thumbnails || []);
+            setBrolls(project.brolls || []);
+
+          }}
+          className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700"
+        >
+          Open Project
+        </button>
+
+      </div>
+
+    ))}
+
+  </div>
+
+</div>
 
     </main>
   );

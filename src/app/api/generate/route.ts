@@ -1,125 +1,123 @@
+import { NextResponse } from "next/server";
 import OpenAI from "openai";
-import { auth } from "@clerk/nextjs/server";
-import { supabase } from "@/lib/supabase";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
 export async function POST(req: Request) {
-  const { userId } = await auth();
-
-  if (!userId) {
-    return Response.json({
-      error: "Unauthorized",
-    });
-  }
 
   try {
+
     const body = await req.json();
 
-    const { topic } = body;
+    const topic = body.prompt;
+const style = body.style || "MrBeast";
 
-    if (!topic) {
-      return Response.json({
-        error: "Topic is required",
-      });
-    }
-
-    // Get existing user
-    let { data: userData } = await supabase
-      .from("users")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
-
-    // Create new user if not exists
-    if (!userData) {
-      await supabase.from("users").insert([
-        {
-          user_id: userId,
-          credits: 5,
-        },
-      ]);
-
-      const { data: newUser } = await supabase
-        .from("users")
-        .select("*")
-        .eq("user_id", userId)
-        .single();
-
-      userData = newUser;
-    }
-
-    // Stop if no credits
-    if (!userData) {
-      return Response.json({
-        error: "User not found",
-      });
-    }
-
-    if (userData.credits <= 0) {
-      return Response.json({
-        error: "No credits remaining",
-      });
-    }
-
-    // Generate AI content
     const completion = await openai.chat.completions.create({
       model: "gpt-4.1-mini",
+
       messages: [
         {
           role: "system",
           content: `
-You are an elite viral content strategist.
+You are a viral short-form content creator.
 
-Generate content in this exact format:
+Generate cinematic YouTube Shorts / Reels scripts.
 
-# Hook
+The response must include:
 
-# Script
+HOOK:
+INTRO:
+POINT 1:
+POINT 2:
+POINT 3:
+TWIST:
+ENDING CTA:
 
-# Scene Ideas
+BROLL IDEAS:
+- 5 cinematic B-roll shot ideas
+- camera angles
+- transitions
+- visual suggestions
 
-# B-Roll Ideas
+Style:
+- Emotional
+- High retention
+- Curiosity driven
+- Fast paced
+- Human sounding
+- Cinematic
 
-# CTA
-
-Make the content cinematic, emotional and highly engaging.
-          `,
+Avoid generic filler.
+Make every output unique.
+`,
         },
+
         {
           role: "user",
-          content: topic,
+          content: `
+Create a viral short-form video script.
+
+TOPIC:
+${topic}
+
+STYLE:
+${style}
+
+The script should match the selected style perfectly.
+
+Examples:
+
+MrBeast:
+- explosive
+- high energy
+- shocking
+
+Dark:
+- mysterious
+- psychological
+- suspense
+
+Documentary:
+- informative
+- cinematic narration
+
+Motivational:
+- emotional
+- inspiring
+
+Anime:
+- dramatic
+- intense
+- heroic
+
+Cinematic:
+- movie-like narration
+- emotional visuals
+`,
         },
       ],
+
+      temperature: 0.9,
+      max_tokens: 700,
     });
 
-    // Deduct credit
-    await supabase
-      .from("users")
-      .update({
-        credits: userData.credits - 1,
-      })
-      .eq("user_id", userId);
+    const script =
+      completion.choices[0].message.content;
 
-    await supabase.from("scripts").insert([
-  {
-    user_id: userId,
-    topic,
-    content: completion.choices[0].message.content,
-  },
-]);
-
-    return Response.json({
-      result: completion.choices[0].message.content,
-      credits: userData.credits - 1,
+    return NextResponse.json({
+      result: script,
     });
+
   } catch (error) {
-    console.log("FULL ERROR:", error);
 
-    return Response.json({
-      error: String(error),
+    console.log(error);
+
+    return NextResponse.json({
+      result: "Script generation failed.",
     });
+
   }
+
 }
