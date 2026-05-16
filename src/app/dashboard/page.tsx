@@ -223,13 +223,24 @@ setBrolls(extractedBrolls);
 const saveProject = () => {
 
   const newProject = {
-    topic,
-    result,
-    thumbnails,
-    brolls,
-    style: selectedStyle,
-    createdAt: new Date().toISOString(),
-  };
+  topic,
+  result,
+  thumbnails,
+  brolls,
+  style: selectedStyle,
+
+  titles,
+  hooks,
+  hashtags,
+  captions,
+
+  viralScore,
+  hookScore,
+  emotionScore,
+  retentionScore,
+
+  createdAt: new Date().toISOString(),
+};
 
   const updatedProjects = [
     newProject,
@@ -1025,9 +1036,22 @@ await fetch("/api/credits", {
           onClick={() => {
 
             setTopic(project.topic);
-            setResult(project.result);
-            setThumbnails(project.thumbnails || []);
-            setBrolls(project.brolls || []);
+  setResult(project.result);
+
+  setThumbnails(project.thumbnails || []);
+  setBrolls(project.brolls || []);
+
+  setTitles(project.titles || []);
+  setHooks(project.hooks || []);
+  setHashtags(project.hashtags || []);
+  setCaptions(project.captions || []);
+
+  setViralScore(project.viralScore || 0);
+  setHookScore(project.hookScore || 0);
+  setEmotionScore(project.emotionScore || 0);
+  setRetentionScore(project.retentionScore || 0);
+
+  setSelectedStyle(project.style || "MrBeast");
 
           }}
           className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700"
