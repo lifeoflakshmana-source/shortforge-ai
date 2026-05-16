@@ -27,6 +27,7 @@ export default function DashboardPage() {
   const [projects, setProjects] = useState<any[]>([]);
   const [selectedStyle, setSelectedStyle] = useState("MrBeast");
   const [brolls, setBrolls] = useState<string[]>([]);
+  const [showSavedToast, setShowSavedToast] = useState(false);
 
   useEffect(() => {
   const savedProjects =
@@ -253,7 +254,11 @@ const saveProject = () => {
     "projects",
     JSON.stringify(updatedProjects)
   );
+setShowSavedToast(true);
 
+setTimeout(() => {
+  setShowSavedToast(false);
+}, 2500);
 };
 
 const generateThumbnail = async () => {
@@ -1060,12 +1065,14 @@ await fetch("/api/credits", {
           <Button
   onClick={() => {
     setTopic(project.topic || "")
-    setResult(project.script || "")
+    setResult(project.result || "")
     setTitles(project.titles || [])
     setHooks(project.hooks || [])
     setCaptions(project.captions || [])
     setHashtags(project.hashtags || [])
     setThumbnails(project.thumbnails || [])
+    setBrolls(project.brolls || [])
+    setSelectedStyle(project.style || "MrBeast")
     
     window.scrollTo({
       top: 0,
