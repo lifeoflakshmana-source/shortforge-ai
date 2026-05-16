@@ -591,12 +591,40 @@ await fetch("/api/credits", {
 
       <div className="flex gap-4 mt-6">
 
-  <button
-    onClick={saveProject}
-    className="px-5 py-3 rounded-2xl bg-green-600 hover:bg-green-700 transition-all"
-  >
+  <Button
+  onClick={saveProject}
+  className="
+    relative
+    overflow-hidden
+    bg-gradient-to-r
+    from-pink-500
+    via-purple-500
+    to-pink-500
+    hover:scale-105
+    hover:shadow-[0_0_30px_rgba(236,72,153,0.7)]
+    transition-all
+    duration-300
+    font-bold
+    animate-pulse
+    mx-auto flex
+  "
+>
+  <span className="relative z-10 flex items-center gap-2">
     💾 Save Project
-  </button>
+  </span>
+
+  <span
+    className="
+      absolute
+      inset-0
+      bg-white/20
+      translate-x-[-100%]
+      hover:translate-x-[100%]
+      transition-transform
+      duration-700
+    "
+  />
+</Button>
 
 </div>
 
@@ -1030,31 +1058,24 @@ await fetch("/api/credits", {
         <div className="flex gap-3">
 
           <Button
-            onClick={() => {
-
-              setTopic(project.topic);
-              setResult(project.result);
-
-              setThumbnails(project.thumbnails || []);
-              setBrolls(project.brolls || []);
-
-              setTitles(project.titles || []);
-              setHooks(project.hooks || []);
-              setHashtags(project.hashtags || []);
-              setCaptions(project.captions || []);
-
-              setViralScore(project.viralScore || 0);
-              setHookScore(project.hookScore || 0);
-              setEmotionScore(project.emotionScore || 0);
-              setRetentionScore(project.retentionScore || 0);
-
-              setSelectedStyle(project.style || "MrBeast");
-
-            }}
-            className="bg-pink-600 hover:bg-pink-700"
-          >
-            Open Project
-          </Button>
+  onClick={() => {
+    setTopic(project.topic || "")
+    setResult(project.script || "")
+    setTitles(project.titles || [])
+    setHooks(project.hooks || [])
+    setCaptions(project.captions || [])
+    setHashtags(project.hashtags || [])
+    setThumbnails(project.thumbnails || [])
+    
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    })
+  }}
+  className="bg-pink-500 hover:bg-pink-600"
+>
+  Open Project
+</Button>
 
           <Button
             onClick={() => {
