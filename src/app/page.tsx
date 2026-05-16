@@ -186,28 +186,6 @@ useEffect(() => {
 
   return (
     <main className="min-h-screen bg-black text-white">
-      {showSavedToast && (
-
-  <div
-    className="
-      fixed
-      top-6
-      right-6
-      z-50
-      px-6
-      py-4
-      rounded-2xl
-      bg-emerald-500
-      text-white
-      font-bold
-      shadow-[0_0_40px_rgba(16,185,129,0.6)]
-      animate-bounce
-    "
-  >
-    ✅ Project Saved Successfully
-  </div>
-
-)}
 
       {/* Navbar */}
       <nav className="border-b border-white/10 sticky top-0 bg-black/70 backdrop-blur-xl z-50">
