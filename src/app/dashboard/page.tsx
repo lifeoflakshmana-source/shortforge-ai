@@ -28,6 +28,7 @@ export default function DashboardPage() {
   const [selectedStyle, setSelectedStyle] = useState("MrBeast");
   const [brolls, setBrolls] = useState<string[]>([]);
   const [showSavedToast, setShowSavedToast] = useState(false);
+  const [projectSaved, setProjectSaved] = useState(false);
 
   useEffect(() => {
   const savedProjects =
@@ -220,8 +221,8 @@ setBrolls(extractedBrolls);
 };
 
 
-
 const saveProject = () => {
+  if (projectSaved) return;
 
   const newProject = {
   topic,
@@ -259,6 +260,7 @@ setShowSavedToast(true);
 setTimeout(() => {
   setShowSavedToast(false);
 }, 2500);
+setProjectSaved(true);
 };
 
 const generateThumbnail = async () => {
@@ -598,6 +600,7 @@ await fetch("/api/credits", {
 
   <Button
   onClick={saveProject}
+  disabled={projectSaved}
   className="
     relative
     overflow-hidden
@@ -611,11 +614,13 @@ await fetch("/api/credits", {
     duration-300
     font-bold
     animate-pulse
-    mx-auto flex
+    mx-auto
+    flex
   "
 >
+
   <span className="relative z-10 flex items-center gap-2">
-    💾 Save Project
+    {projectSaved ? "✅ Saved" : "💾 Save Project"}
   </span>
 
   <span
@@ -623,12 +628,13 @@ await fetch("/api/credits", {
       absolute
       inset-0
       bg-white/20
-      translate-x-[-100%]
-      hover:translate-x-[100%]
+      -translate-x-full
+      hover:translate-x-full
       transition-transform
       duration-700
     "
   />
+
 </Button>
 
 </div>
