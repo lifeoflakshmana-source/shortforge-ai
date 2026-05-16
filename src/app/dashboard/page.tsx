@@ -988,27 +988,6 @@ await fetch("/api/credits", {
 
       </div>
 
-      {projects.length > 0 && (
-
-  <div className="flex items-center justify-between mb-8">
-
-  <h2 className="text-4xl font-black">
-    Saved Projects 📁
-  </h2>
-
-  <Button
-    onClick={() => {
-      localStorage.removeItem("projects");
-      setProjects([]);
-    }}
-    className="bg-red-600 hover:bg-red-700"
-  >
-    Clear Projects
-  </Button>
-
-</div>
-)}
-
 <div className="mt-16">
 
   <h2 className="text-5xl font-bold mb-8">
@@ -1017,51 +996,101 @@ await fetch("/api/credits", {
 
   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-    {projects.map((project, index) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+
+  {projects && projects.length > 0 ? (
+
+    projects.map((project: any, index: number) => (
 
       <div
         key={index}
         className="rounded-3xl border border-white/10 bg-black/40 p-6"
       >
 
-        <h3 className="text-2xl font-bold mb-3">
-          {project.topic}
-        </h3>
+        <div className="flex items-center justify-between mb-4">
 
-        <p className="text-zinc-400 mb-5">
-          {project.style}
+          <h3 className="text-2xl font-bold text-white">
+            {project.topic}
+          </h3>
+
+          <div className="px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold">
+            Viral Score: {project.viralScore || 0}/100
+          </div>
+
+        </div>
+
+        <p className="text-zinc-400 text-sm mb-4">
+          {new Date(project.createdAt).toLocaleString()}
         </p>
 
-        <button
-          onClick={() => {
+        <div className="text-zinc-300 line-clamp-5 mb-6">
+          {project.result}
+        </div>
 
-            setTopic(project.topic);
-  setResult(project.result);
+        <div className="flex gap-3">
 
-  setThumbnails(project.thumbnails || []);
-  setBrolls(project.brolls || []);
+          <Button
+            onClick={() => {
 
-  setTitles(project.titles || []);
-  setHooks(project.hooks || []);
-  setHashtags(project.hashtags || []);
-  setCaptions(project.captions || []);
+              setTopic(project.topic);
+              setResult(project.result);
 
-  setViralScore(project.viralScore || 0);
-  setHookScore(project.hookScore || 0);
-  setEmotionScore(project.emotionScore || 0);
-  setRetentionScore(project.retentionScore || 0);
+              setThumbnails(project.thumbnails || []);
+              setBrolls(project.brolls || []);
 
-  setSelectedStyle(project.style || "MrBeast");
+              setTitles(project.titles || []);
+              setHooks(project.hooks || []);
+              setHashtags(project.hashtags || []);
+              setCaptions(project.captions || []);
 
-          }}
-          className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700"
-        >
-          Open Project
-        </button>
+              setViralScore(project.viralScore || 0);
+              setHookScore(project.hookScore || 0);
+              setEmotionScore(project.emotionScore || 0);
+              setRetentionScore(project.retentionScore || 0);
+
+              setSelectedStyle(project.style || "MrBeast");
+
+            }}
+            className="bg-pink-600 hover:bg-pink-700"
+          >
+            Open Project
+          </Button>
+
+          <Button
+            onClick={() => {
+
+              const updatedProjects = projects.filter(
+                (_: any, i: number) => i !== index
+              );
+
+              setProjects(updatedProjects);
+
+              localStorage.setItem(
+                "projects",
+                JSON.stringify(updatedProjects)
+              );
+
+            }}
+            variant="destructive"
+          >
+            Delete
+          </Button>
+
+        </div>
 
       </div>
 
-    ))}
+    ))
+
+  ) : (
+
+    <div className="text-zinc-400 text-lg">
+      No saved projects yet.
+    </div>
+
+  )}
+
+</div>
 
   </div>
 
